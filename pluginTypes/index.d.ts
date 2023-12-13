@@ -1,3 +1,12 @@
+/// <amd-module name="@scom/scom-twitter-post/data.json.ts" />
+declare module "@scom/scom-twitter-post/data.json.ts" {
+    const _default: {
+        defaultBuilderData: {
+            url: string;
+        };
+    };
+    export default _default;
+}
 /// <amd-module name="@scom/scom-twitter-post" />
 declare module "@scom/scom-twitter-post" {
     import { ControlElement, Module, Container, IDataSchema } from '@ijstech/components';
@@ -23,7 +32,7 @@ declare module "@scom/scom-twitter-post" {
         config?: ITweetConfig;
     }
     export class ScomTwitterPost extends Module {
-        private pnlContent;
+        private pnlTwitterPost;
         private pnlLoading;
         private _data;
         constructor(parent?: Container, options?: any);
