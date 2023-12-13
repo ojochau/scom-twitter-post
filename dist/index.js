@@ -4,7 +4,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components"], function (require, exports, components_1) {
+define("@scom/scom-twitter-post/data.json.ts", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    ///<amd-module name='@scom/scom-twitter-post/data.json.ts'/> 
+    exports.default = {
+        "defaultBuilderData": {
+            "url": "https://twitter.com/elonmusk/status/1734398004822712586"
+        }
+    };
+});
+define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components", "@scom/scom-twitter-post/data.json.ts"], function (require, exports, components_1, data_json_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomTwitterPost = void 0;
@@ -40,7 +50,7 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components"],
             return this._data;
         }
         clear() {
-            this.pnlContent.clearInnerHTML();
+            this.pnlTwitterPost.clearInnerHTML();
         }
         async renderUI() {
             this.clear();
@@ -51,7 +61,7 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components"],
             const config = this.config || { theme: 'light' };
             window.twttr.ready(function (twttr) {
                 self.pnlLoading.visible = true;
-                twttr.widgets.createTweet(id, self.pnlContent, config).then(function () {
+                twttr.widgets.createTweet(id, self.pnlTwitterPost, config).then(function () {
                     self.pnlLoading.visible = false;
                 });
             });
@@ -70,6 +80,20 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components"],
         }
         getConfigurators() {
             return [
+                {
+                    name: 'Builder Configurator',
+                    target: 'Builders',
+                    getActions: () => {
+                        return this._getActions();
+                    },
+                    getData: this.getData.bind(this),
+                    setData: async (data) => {
+                        const defaultData = data_json_1.default.defaultBuilderData;
+                        await this.setData({ ...defaultData, ...data });
+                    },
+                    getTag: this.getTag.bind(this),
+                    setTag: this.setTag.bind(this)
+                },
                 {
                     name: 'Editor',
                     target: 'Editor',
@@ -153,7 +177,7 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components"],
         }
         render() {
             return (this.$render("i-panel", { border: { radius: 'inherit' } },
-                this.$render("i-vstack", { id: "pnlLoading", width: "100%", minHeight: 30, position: "absolute", bottom: 0, zIndex: 999, background: { color: Theme.background.main }, class: "i-loading-overlay", visible: false, mediaQueries: [
+                this.$render("i-vstack", { id: "pnlLoading", width: "100%", minHeight: 20, position: "absolute", bottom: 0, zIndex: 999, background: { color: 'transparent' }, class: "i-loading-overlay", visible: false, mediaQueries: [
                         {
                             maxWidth: '767px',
                             properties: {
@@ -163,8 +187,8 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components"],
                         },
                     ] },
                     this.$render("i-vstack", { horizontalAlignment: "center", verticalAlignment: "center", position: "absolute", top: "calc(50% - 0.75rem)", left: "calc(50% - 0.75rem)" },
-                        this.$render("i-icon", { class: "i-loading-spinner_icon", name: "spinner", width: 24, height: 24, fill: Theme.colors.primary.main }))),
-                this.$render("i-panel", { id: "pnlContent" })));
+                        this.$render("i-icon", { class: "i-loading-spinner_icon", name: "spinner", width: '1.125rem', height: '1.125rem', fill: Theme.colors.primary.main }))),
+                this.$render("i-panel", { id: "pnlTwitterPost" })));
         }
     };
     ScomTwitterPost = __decorate([

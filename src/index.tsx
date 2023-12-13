@@ -8,6 +8,7 @@ import {
   application,
   IDataSchema
 } from '@ijstech/components';
+import dataJson from './data.json';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomTwitterPostElement extends ControlElement {
@@ -42,7 +43,7 @@ const widgetsPath = `${path}/lib/widgets.js`;
 
 @customElements('i-scom-twitter-post')
 export class ScomTwitterPost extends Module {
-  private pnlContent: Panel;
+  private pnlTwitterPost: Panel;
   private pnlLoading: Panel;
 
   private _data: ITweet;
@@ -81,7 +82,7 @@ export class ScomTwitterPost extends Module {
   }
 
   clear() {
-    this.pnlContent.clearInnerHTML();
+    this.pnlTwitterPost.clearInnerHTML();
   }
 
   private async renderUI() {
@@ -95,7 +96,7 @@ export class ScomTwitterPost extends Module {
         self.pnlLoading.visible = true;
         twttr.widgets.createTweet(
           id,
-          self.pnlContent,
+          self.pnlTwitterPost,
           config
         ).then(function() {
           self.pnlLoading.visible = false;
@@ -120,6 +121,20 @@ export class ScomTwitterPost extends Module {
 
   getConfigurators() {
     return [
+      {
+        name: 'Builder Configurator',
+        target: 'Builders',
+        getActions: () => {
+          return this._getActions();
+        },
+        getData: this.getData.bind(this),
+        setData: async (data: ITweet) => {
+          const defaultData = dataJson.defaultBuilderData as any;
+          await this.setData({...defaultData, ...data});
+        },
+        getTag: this.getTag.bind(this),
+        setTag: this.setTag.bind(this)
+      },
       {
         name: 'Editor',
         target: 'Editor',
@@ -209,11 +224,11 @@ export class ScomTwitterPost extends Module {
         <i-vstack
           id="pnlLoading"
           width="100%"
-          minHeight={30}
+          minHeight={20}
           position="absolute"
           bottom={0}
           zIndex={999}
-          background={{ color: Theme.background.main }}
+          background={{ color: 'transparent'}}
           class="i-loading-overlay"
           visible={false}
           mediaQueries={[
@@ -236,13 +251,13 @@ export class ScomTwitterPost extends Module {
             <i-icon
               class="i-loading-spinner_icon"
               name="spinner"
-              width={24}
-              height={24}
+              width={'1.125rem'}
+              height={'1.125rem'}
               fill={Theme.colors.primary.main}
             />
           </i-vstack>
         </i-vstack>
-        <i-panel id="pnlContent"></i-panel>
+        <i-panel id="pnlTwitterPost"></i-panel>
       </i-panel>
     );
   }
