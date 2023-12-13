@@ -46,6 +46,8 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components"],
             this.clear();
             const self = this;
             const id = this.getTweetID(this.url);
+            if (!id)
+                return;
             const config = this.config || { theme: 'light' };
             window.twttr.ready(function (twttr) {
                 self.pnlLoading.visible = true;

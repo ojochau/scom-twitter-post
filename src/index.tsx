@@ -88,6 +88,7 @@ export class ScomTwitterPost extends Module {
     this.clear();
     const self = this;
     const id = this.getTweetID(this.url);
+    if (!id) return;
     const config = this.config || {theme: 'light'};
     window.twttr.ready(
       function (twttr: any) {
