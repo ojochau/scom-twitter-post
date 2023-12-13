@@ -5,7 +5,8 @@ import {
   Container,
   Panel,
   Styles,
-  application
+  application,
+  IDataSchema
 } from '@ijstech/components';
 const Theme = Styles.Theme.ThemeVars;
 
@@ -108,6 +109,70 @@ export class ScomTwitterPost extends Module {
     return regex.exec(url)?.[2];
   }
 
+  private getTag() {
+    return this.tag
+  }
+
+  private async setTag(value: any) {
+    this.tag = value;
+  }
+
+  getConfigurators() {
+    return [
+      {
+        name: 'Editor',
+        target: 'Editor',
+        getActions: () => {
+          return this._getActions()
+        },
+        setData: this.setData.bind(this),
+        getData: this.getData.bind(this),
+        getTag: this.getTag.bind(this),
+        setTag: this.setTag.bind(this)
+      }
+    ]
+  }
+
+  private getPropertiesSchema() {
+    const schema: IDataSchema = {
+      type: "object",
+      required: ["url"],
+      properties: {
+        url: {
+          type: "string"
+        }
+      }
+    };
+    return schema;
+  }
+
+  private _getActions() {
+    const propertiesSchema = this.getPropertiesSchema();
+    const actions = [
+      {
+        name: 'Edit',
+        icon: 'edit',
+        command: (builder: any, userInputData: any) => {
+          let oldData = {url: ''};
+          return {
+            execute: () => {
+              oldData = {...this._data};
+              if (userInputData?.url) this._data.url = userInputData.url;
+              if (builder?.setData) builder.setData(this._data);
+            },
+            undo: () => {
+              this._data = {...oldData};
+              if (builder?.setData) builder.setData(this._data);
+            },
+            redo: () => {}
+          }
+        },
+        userInputDataSchema: propertiesSchema as IDataSchema
+      }
+    ]
+    return actions
+  }
+
   async init() {
     super.init();
     await this.initLibs();
@@ -143,7 +208,7 @@ export class ScomTwitterPost extends Module {
         <i-vstack
           id="pnlLoading"
           width="100%"
-          minHeight={200}
+          minHeight={30}
           position="absolute"
           bottom={0}
           zIndex={999}

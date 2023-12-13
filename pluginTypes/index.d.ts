@@ -1,6 +1,6 @@
 /// <amd-module name="@scom/scom-twitter-post" />
 declare module "@scom/scom-twitter-post" {
-    import { ControlElement, Module, Container } from '@ijstech/components';
+    import { ControlElement, Module, Container, IDataSchema } from '@ijstech/components';
     interface ScomTwitterPostElement extends ControlElement {
         url: string;
         config?: ITweetConfig;
@@ -37,6 +37,28 @@ declare module "@scom/scom-twitter-post" {
         clear(): void;
         private renderUI;
         private getTweetID;
+        private getTag;
+        private setTag;
+        getConfigurators(): {
+            name: string;
+            target: string;
+            getActions: () => {
+                name: string;
+                icon: string;
+                command: (builder: any, userInputData: any) => {
+                    execute: () => void;
+                    undo: () => void;
+                    redo: () => void;
+                };
+                userInputDataSchema: IDataSchema;
+            }[];
+            setData: any;
+            getData: any;
+            getTag: any;
+            setTag: any;
+        }[];
+        private getPropertiesSchema;
+        private _getActions;
         init(): Promise<void>;
         private initLibs;
         render(): any;
