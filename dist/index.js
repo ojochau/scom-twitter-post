@@ -70,7 +70,7 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components", 
             if (/^\d{19}$/g.test(url))
                 return url;
             const regex = /((twitter|x).com)\/\w*\/status\/(\d{19}$)/gm;
-            return regex.exec(url)?.[2];
+            return regex.exec(url)?.[3];
         }
         getTag() {
             return this.tag;
