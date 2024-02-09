@@ -69,7 +69,7 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components", 
         getTweetID(url) {
             if (/^\d{19}$/g.test(url))
                 return url;
-            const regex = /(twitter.com)\/\w*\/status\/(\d{19}$)/gm;
+            const regex = /((twitter|x).com)\/\w*\/status\/(\d{19}$)/gm;
             return regex.exec(url)?.[2];
         }
         getTag() {
