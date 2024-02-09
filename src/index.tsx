@@ -107,8 +107,8 @@ export class ScomTwitterPost extends Module {
 
   private getTweetID(url: string) {
     if (/^\d{19}$/g.test(url)) return url;
-    const regex = /(twitter.com)\/\w*\/status\/(\d{19}$)/gm;
-    return regex.exec(url)?.[2];
+    const regex = /((twitter|x).com)\/\w*\/status\/(\d{19}$)/gm;
+    return regex.exec(url)?.[3];
   }
 
   private getTag() {
