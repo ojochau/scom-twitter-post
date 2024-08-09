@@ -8,7 +8,7 @@
         "@ijstech/components": "^0.1.47",
         "@ijstech/eth-wallet": "^0.1.35",
         "@ijstech/eth-contract": "^0.1.14",
-        "@scom/dapp": "^0.1.11",
+        "@scom/scom-widget-test": "https://github.com/scom-repos/scom-widget-test.git",
         "@scom/scom-twitter-post": "file:./ref"
     },
     "devDependencies": {

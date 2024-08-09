@@ -1,18 +1,13 @@
 {
   "env": "testnet",
-  "main": "@scom/dapp",
-  "assets": "@modules/assets",
+  "main": "@modules/module1",
   "moduleDir": "modules",
   "modules": {
-    "@modules/assets": {
-      "path": "assets"
-    },
     "@modules/module1": {
       "path": "module1"
     }
   },
   "dependencies": {
-    "@scom/dapp": "*",
     "@scom/scom-twitter-post": "*",
     "@ijstech/eth-contract": "*",
     "@ijstech/eth-wallet": "*"
