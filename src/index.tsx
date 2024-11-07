@@ -41,8 +41,14 @@ declare const window: any;
 const path = application.currentModuleDir;
 const widgetsPath = `${path}/lib/widgets.js`;
 
+
+type executeFnType = (editor: any, block: any) => void;
+interface BlockSpecs {
+  addBlock: (blocknote: any, executeFn: executeFnType, callbackFn?: any) => { block: any, slashItem: any };
+}
+
 @customElements('i-scom-twitter-post')
-export class ScomTwitterPost extends Module {
+export class ScomTwitterPost extends Module implements BlockSpecs {
   private pnlTwitterPost: Panel;
   private pnlLoading: Panel;
 
@@ -70,6 +76,121 @@ export class ScomTwitterPost extends Module {
   }
   set config(value: ITweetConfig) {
     this._data.config = value;
+  }
+
+  addBlock(blocknote: any, executeFn: executeFnType, callbackFn?: any) {
+    const twitterRegex = /https:\/\/(twitter.com)\/\w*\/status\/(\d{19}$)/g;
+
+    const TweetBlock = blocknote.createBlockSpec({
+      type: "tweet",
+      propSchema: {
+        ...blocknote.defaultProps,
+        url: {default: ''},
+        width: {default: 512},
+        height: {default: 'auto'}
+      },
+      content: "none"
+    },
+    {
+      render: (block: any) => {
+        const wrapper = new Panel();
+        const { url } = JSON.parse(JSON.stringify(block.props));
+        const customElm = new ScomTwitterPost(wrapper, { url });
+        if (typeof callbackFn === "function") {
+          callbackFn(customElm, block);
+        }
+        wrapper.appendChild(customElm);
+        return {
+          dom: wrapper
+        };
+      },
+      parseFn: () => {
+        return [
+          {
+            tag: "div[data-content-type=tweet]",
+            node: 'tweet'
+          },
+          {
+            tag: "a",
+            getAttrs: (element: string|HTMLElement) => {
+              if (typeof element === "string") {
+                return false;
+              }
+              const url = element.getAttribute('href');
+              const match = url && twitterRegex.test(url);
+              twitterRegex.lastIndex = 0;
+              if (match) {
+                return { url };
+              }
+              return false;
+            },
+            priority: 406,
+            node: 'tweet'
+          },
+          {
+            tag: "p",
+            getAttrs: (element: string|HTMLElement) => {
+              if (typeof element === "string") {
+                return false;
+              }
+              const child = element.firstChild as HTMLElement;
+              if (child?.nodeName === 'A') {
+                const url = child.getAttribute('href');
+                const match = url && twitterRegex.test(url);
+                twitterRegex.lastIndex = 0;
+                if (match) {
+                  return { url };
+                }
+              }
+              return false;
+            },
+            priority: 407,
+            node: 'tweet'
+          },
+        ]
+      },
+      toExternalHTML: (block: any, editor: any) => {
+        const link = document.createElement("a");
+        const url = block.props.url || "";
+        link.setAttribute("href", url);
+        link.textContent = 'tweet';
+        const wrapper = document.createElement("p");
+        wrapper.appendChild(link);
+        return { dom: wrapper };
+      },
+      pasteRules: [
+        {
+          find: twitterRegex,
+          handler(props: any) {
+            const { state, chain, range } = props;
+            const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+  
+            chain().BNUpdateBlock(state.selection.from, {
+              type: "tweet",
+              props: {
+                url: textContent
+              },
+            }).setTextSelection(range.from + 1);
+          }
+        }
+      ]
+    });
+
+    const TweetSlashItem = {
+      name: "Tweet",
+      execute: (editor: any) => {
+        const block = { type: "tweet", props: { url: "" }};
+        if (typeof executeFn === "function") {
+          executeFn(editor, block);
+        }
+      },
+      aliases: ["tweet", "widget"]
+    }
+
+    return {
+      block: TweetBlock,
+      slashItem: TweetSlashItem
+    };
   }
 
   async setData(data: ITweet) {

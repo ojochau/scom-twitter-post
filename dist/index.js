@@ -16,12 +16,13 @@ define("@scom/scom-twitter-post/data.json.ts", ["require", "exports"], function 
 });
 define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components", "@scom/scom-twitter-post/data.json.ts"], function (require, exports, components_1, data_json_1) {
     "use strict";
+    var ScomTwitterPost_1;
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ScomTwitterPost = void 0;
     const Theme = components_1.Styles.Theme.ThemeVars;
     const path = components_1.application.currentModuleDir;
     const widgetsPath = `${path}/lib/widgets.js`;
-    let ScomTwitterPost = class ScomTwitterPost extends components_1.Module {
+    let ScomTwitterPost = ScomTwitterPost_1 = class ScomTwitterPost extends components_1.Module {
         constructor(parent, options) {
             super(parent, options);
         }
@@ -41,6 +42,115 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components", 
         }
         set config(value) {
             this._data.config = value;
+        }
+        addBlock(blocknote, executeFn, callbackFn) {
+            const twitterRegex = /https:\/\/(twitter.com)\/\w*\/status\/(\d{19}$)/g;
+            const TweetBlock = blocknote.createBlockSpec({
+                type: "tweet",
+                propSchema: {
+                    ...blocknote.defaultProps,
+                    url: { default: '' },
+                    width: { default: 512 },
+                    height: { default: 'auto' }
+                },
+                content: "none"
+            }, {
+                render: (block) => {
+                    const wrapper = new components_1.Panel();
+                    const { url } = JSON.parse(JSON.stringify(block.props));
+                    const customElm = new ScomTwitterPost_1(wrapper, { url });
+                    if (typeof callbackFn === "function") {
+                        callbackFn(customElm, block);
+                    }
+                    wrapper.appendChild(customElm);
+                    return {
+                        dom: wrapper
+                    };
+                },
+                parseFn: () => {
+                    return [
+                        {
+                            tag: "div[data-content-type=tweet]",
+                            node: 'tweet'
+                        },
+                        {
+                            tag: "a",
+                            getAttrs: (element) => {
+                                if (typeof element === "string") {
+                                    return false;
+                                }
+                                const url = element.getAttribute('href');
+                                const match = url && twitterRegex.test(url);
+                                twitterRegex.lastIndex = 0;
+                                if (match) {
+                                    return { url };
+                                }
+                                return false;
+                            },
+                            priority: 406,
+                            node: 'tweet'
+                        },
+                        {
+                            tag: "p",
+                            getAttrs: (element) => {
+                                if (typeof element === "string") {
+                                    return false;
+                                }
+                                const child = element.firstChild;
+                                if (child?.nodeName === 'A') {
+                                    const url = child.getAttribute('href');
+                                    const match = url && twitterRegex.test(url);
+                                    twitterRegex.lastIndex = 0;
+                                    if (match) {
+                                        return { url };
+                                    }
+                                }
+                                return false;
+                            },
+                            priority: 407,
+                            node: 'tweet'
+                        },
+                    ];
+                },
+                toExternalHTML: (block, editor) => {
+                    const link = document.createElement("a");
+                    const url = block.props.url || "";
+                    link.setAttribute("href", url);
+                    link.textContent = 'tweet';
+                    const wrapper = document.createElement("p");
+                    wrapper.appendChild(link);
+                    return { dom: wrapper };
+                },
+                pasteRules: [
+                    {
+                        find: twitterRegex,
+                        handler(props) {
+                            const { state, chain, range } = props;
+                            const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
+                            chain().BNUpdateBlock(state.selection.from, {
+                                type: "tweet",
+                                props: {
+                                    url: textContent
+                                },
+                            }).setTextSelection(range.from + 1);
+                        }
+                    }
+                ]
+            });
+            const TweetSlashItem = {
+                name: "Tweet",
+                execute: (editor) => {
+                    const block = { type: "tweet", props: { url: "" } };
+                    if (typeof executeFn === "function") {
+                        executeFn(editor, block);
+                    }
+                },
+                aliases: ["tweet", "widget"]
+            };
+            return {
+                block: TweetBlock,
+                slashItem: TweetSlashItem
+            };
         }
         async setData(data) {
             this._data = { ...data };
@@ -191,7 +301,7 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components", 
                 this.$render("i-panel", { id: "pnlTwitterPost" })));
         }
     };
-    ScomTwitterPost = __decorate([
+    ScomTwitterPost = ScomTwitterPost_1 = __decorate([
         (0, components_1.customElements)('i-scom-twitter-post')
     ], ScomTwitterPost);
     exports.ScomTwitterPost = ScomTwitterPost;
