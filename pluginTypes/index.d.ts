@@ -31,7 +31,14 @@ declare module "@scom/scom-twitter-post" {
         url: string;
         config?: ITweetConfig;
     }
-    export class ScomTwitterPost extends Module {
+    type executeFnType = (editor: any, block: any) => void;
+    interface BlockSpecs {
+        addBlock: (blocknote: any, executeFn: executeFnType, callbackFn?: any) => {
+            block: any;
+            slashItem: any;
+        };
+    }
+    export class ScomTwitterPost extends Module implements BlockSpecs {
         private pnlTwitterPost;
         private pnlLoading;
         private _data;
@@ -41,6 +48,14 @@ declare module "@scom/scom-twitter-post" {
         set url(value: string);
         get config(): ITweetConfig;
         set config(value: ITweetConfig);
+        addBlock(blocknote: any, executeFn: executeFnType, callbackFn?: any): {
+            block: any;
+            slashItem: {
+                name: string;
+                execute: (editor: any) => void;
+                aliases: string[];
+            };
+        };
         setData(data: ITweet): Promise<void>;
         getData(): ITweet;
         clear(): void;
