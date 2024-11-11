@@ -9,6 +9,7 @@ import {
   IDataSchema
 } from '@ijstech/components';
 import dataJson from './data.json';
+import { BlockNoteSpecs, callbackFnType, executeFnType } from '@scom/scom-blocknote-sdk';
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomTwitterPostElement extends ControlElement {
@@ -39,20 +40,14 @@ interface ITweet {
 declare const window: any;
 
 const path = application.currentModuleDir;
-const widgetsPath = `${path}/lib/widgets.js`;
-
-
-type executeFnType = (editor: any, block: any) => void;
-interface BlockSpecs {
-  addBlock: (blocknote: any, executeFn: executeFnType, callbackFn?: any) => { block: any, slashItem: any };
-}
 
 @customElements('i-scom-twitter-post')
-export class ScomTwitterPost extends Module implements BlockSpecs {
+export class ScomTwitterPost extends Module implements BlockNoteSpecs {
   private pnlTwitterPost: Panel;
   private pnlLoading: Panel;
 
   private _data: ITweet;
+  private _moduleDir: string;
 
   constructor(parent?: Container, options?: any) {
     super(parent, options);
@@ -78,11 +73,12 @@ export class ScomTwitterPost extends Module implements BlockSpecs {
     this._data.config = value;
   }
 
-  addBlock(blocknote: any, executeFn: executeFnType, callbackFn?: any) {
+  addBlock(blocknote: any, executeFn: executeFnType, callbackFn?: callbackFnType) {
     const twitterRegex = /https:\/\/(twitter.com)\/\w*\/status\/(\d{19}$)/g;
+    const blockType = "tweet";
 
     const TweetBlock = blocknote.createBlockSpec({
-      type: "tweet",
+      type: blockType,
       propSchema: {
         ...blocknote.defaultProps,
         url: {default: ''},
@@ -166,7 +162,7 @@ export class ScomTwitterPost extends Module implements BlockSpecs {
             const textContent = state.doc.resolve(range.from).nodeAfter?.textContent;
   
             chain().BNUpdateBlock(state.selection.from, {
-              type: "tweet",
+              type: blockType,
               props: {
                 url: textContent
               },
@@ -176,20 +172,30 @@ export class ScomTwitterPost extends Module implements BlockSpecs {
       ]
     });
 
+    const twitterImg = "data:image/svg+xml,%3Csvg%20viewBox%3D%270%200%2032%2032%27%20fill%3D%27none%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M17.9686%2014.1623L26.7065%204H24.6358L17.0488%2012.8238L10.9891%204H4L13.1634%2017.3432L4%2028H6.07069L14.0827%2018.6817L20.4822%2028H27.4714L17.9681%2014.1623H17.9686ZM15.1326%2017.4607L14.2041%2016.132L6.81679%205.55961H9.99723L15.9589%2014.0919L16.8873%2015.4206L24.6368%2026.5113H21.4564L15.1326%2017.4612V17.4607Z%27%20fill%3D%27white%27%2F%3E%3C%2Fsvg%3E";
     const TweetSlashItem = {
       name: "Tweet",
       execute: (editor: any) => {
-        const block = { type: "tweet", props: { url: "" }};
+        const block = { type: blockType, props: { url: "" }};
         if (typeof executeFn === "function") {
           executeFn(editor, block);
         }
       },
-      aliases: ["tweet", "widget"]
+      aliases: ["tweet", "widget"],
+      group: "Widget",
+      icon: {image: {url: twitterImg, width: '100%', height: '100%', display: 'inline-block'}},
+      hint: "Insert a twitter post"
+    }
+
+    const moduleData = {
+      name: '@scom/scom-twitter-post',
+      localPath: 'scom-twitter-post'
     }
 
     return {
       block: TweetBlock,
-      slashItem: TweetSlashItem
+      slashItem: TweetSlashItem,
+      moduleData
     };
   }
 
@@ -311,7 +317,8 @@ export class ScomTwitterPost extends Module implements BlockSpecs {
   }
 
   async init() {
-    super.init();
+    await super.init();
+    this._moduleDir = this.currentModuleDir ?? path ?? '';
     await this.initLibs();
     const url = this.getAttribute('url', true);
     const config = this.getAttribute('config', true);
@@ -321,13 +328,14 @@ export class ScomTwitterPost extends Module implements BlockSpecs {
   private async initLibs() {
     const lib = document.getElementById("twitter-wjs");
     if (lib) return;
-    window.twttr = (function(d, s, id) {
+    const widgetsPath = `${this._moduleDir}/lib/widgets.js`;
+    window.twttr = (function(d, s, id, path) {
       var js, fjs = d.getElementsByTagName(s)[0],
         t = window.twttr || {};
       if (d.getElementById(id)) return t;
       js = d.createElement(s);
       js.id = id;
-      js.src = widgetsPath; // "https://platform.twitter.com/widgets.js";
+      js.src = path; // "https://platform.twitter.com/widgets.js";
       fjs.parentNode.insertBefore(js, fjs);
     
       t._e = [];
@@ -336,7 +344,7 @@ export class ScomTwitterPost extends Module implements BlockSpecs {
       };
     
       return t;
-    }(document, "script", "twitter-wjs"));
+    }(document, "script", "twitter-wjs", widgetsPath));
   }
 
   render() {
