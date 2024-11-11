@@ -1,3 +1,4 @@
 {
-  "type": "widget"
+    "type": "widget",
+    "version": "0.1.6"
 }

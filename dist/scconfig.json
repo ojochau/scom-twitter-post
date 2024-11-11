@@ -1,7 +1,7 @@
 {
     "name": "@scom/scom-twitter-post",
     "type": "widget",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "dependencies": [
         "@ijstech/components",
         "@scom/scom-blocknote-sdk"
