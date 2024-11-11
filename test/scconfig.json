@@ -8,6 +8,7 @@
     }
   },
   "dependencies": {
+    "@scom/scom-blocknote-sdk": "*",
     "@scom/scom-twitter-post": "*",
     "@ijstech/eth-contract": "*",
     "@ijstech/eth-wallet": "*"

@@ -10,6 +10,7 @@ declare module "@scom/scom-twitter-post/data.json.ts" {
 /// <amd-module name="@scom/scom-twitter-post" />
 declare module "@scom/scom-twitter-post" {
     import { ControlElement, Module, Container, IDataSchema } from '@ijstech/components';
+    import { BlockNoteSpecs, callbackFnType, executeFnType } from '@scom/scom-blocknote-sdk';
     interface ScomTwitterPostElement extends ControlElement {
         url: string;
         config?: ITweetConfig;
@@ -31,29 +32,37 @@ declare module "@scom/scom-twitter-post" {
         url: string;
         config?: ITweetConfig;
     }
-    type executeFnType = (editor: any, block: any) => void;
-    interface BlockSpecs {
-        addBlock: (blocknote: any, executeFn: executeFnType, callbackFn?: any) => {
-            block: any;
-            slashItem: any;
-        };
-    }
-    export class ScomTwitterPost extends Module implements BlockSpecs {
+    export class ScomTwitterPost extends Module implements BlockNoteSpecs {
         private pnlTwitterPost;
         private pnlLoading;
         private _data;
+        private _moduleDir;
         constructor(parent?: Container, options?: any);
         static create(options?: ScomTwitterPostElement, parent?: Container): Promise<ScomTwitterPost>;
         get url(): string;
         set url(value: string);
         get config(): ITweetConfig;
         set config(value: ITweetConfig);
-        addBlock(blocknote: any, executeFn: executeFnType, callbackFn?: any): {
+        addBlock(blocknote: any, executeFn: executeFnType, callbackFn?: callbackFnType): {
             block: any;
             slashItem: {
                 name: string;
                 execute: (editor: any) => void;
                 aliases: string[];
+                group: string;
+                icon: {
+                    image: {
+                        url: string;
+                        width: string;
+                        height: string;
+                        display: string;
+                    };
+                };
+                hint: string;
+            };
+            moduleData: {
+                name: string;
+                localPath: string;
             };
         };
         setData(data: ITweet): Promise<void>;

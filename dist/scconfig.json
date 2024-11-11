@@ -3,6 +3,7 @@
     "type": "widget",
     "version": "0.1.4",
     "dependencies": [
-        "@ijstech/components"
+        "@ijstech/components",
+        "@scom/scom-blocknote-sdk"
     ]
 }

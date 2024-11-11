@@ -9,6 +9,7 @@
         "@ijstech/eth-wallet": "^0.1.35",
         "@ijstech/eth-contract": "^0.1.14",
         "@scom/scom-widget-test": "^0.1.1",
+        "@scom/scom-blocknote-sdk": "^0.1.1",
         "@scom/scom-twitter-post": "file:./ref"
     },
     "devDependencies": {
