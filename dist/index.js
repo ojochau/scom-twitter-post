@@ -14,27 +14,23 @@ define("@scom/scom-twitter-post/data.json.ts", ["require", "exports"], function 
         }
     };
 });
-define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components", "@scom/scom-twitter-post/data.json.ts"], function (require, exports, components_1, data_json_1) {
+define("@scom/scom-twitter-post/model.ts", ["require", "exports", "@ijstech/components", "@scom/scom-twitter-post/data.json.ts"], function (require, exports, components_1, data_json_1) {
     "use strict";
-    var ScomTwitterPost_1;
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.ScomTwitterPost = void 0;
-    const Theme = components_1.Styles.Theme.ThemeVars;
+    exports.Model = void 0;
     const path = components_1.application.currentModuleDir;
-    let ScomTwitterPost = ScomTwitterPost_1 = class ScomTwitterPost extends components_1.Module {
-        constructor(parent, options) {
-            super(parent, options);
-        }
-        static async create(options, parent) {
-            let self = new this(parent, options);
-            await self.ready();
-            return self;
+    class Model {
+        constructor(module) {
+            this._data = { url: '' };
+            this.module = module;
+            this.moduleDir = this.module.currentModuleDir ?? path ?? '';
         }
         get url() {
-            return this._data.url ?? '';
+            return this._data.url || '';
         }
         set url(value) {
             this._data.url = value ?? '';
+            this.updateWidget();
         }
         get config() {
             return this._data.config;
@@ -58,7 +54,7 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components", 
                 render: (block) => {
                     const wrapper = new components_1.Panel();
                     const { url } = JSON.parse(JSON.stringify(block.props));
-                    const customElm = new ScomTwitterPost_1(wrapper, { url });
+                    const customElm = this.createTwitterPost(wrapper, url);
                     if (typeof callbackFn === "function") {
                         callbackFn(customElm, block);
                     }
@@ -161,42 +157,6 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components", 
                 moduleData
             };
         }
-        async setData(data) {
-            this._data = { ...data };
-            await this.renderUI();
-        }
-        getData() {
-            return this._data;
-        }
-        clear() {
-            this.pnlTwitterPost.clearInnerHTML();
-        }
-        async renderUI() {
-            this.clear();
-            const self = this;
-            const id = this.getTweetID(this.url);
-            if (!id)
-                return;
-            const config = this.config || { theme: 'light' };
-            window.twttr.ready(function (twttr) {
-                self.pnlLoading.visible = true;
-                twttr.widgets.createTweet(id, self.pnlTwitterPost, config).then(function () {
-                    self.pnlLoading.visible = false;
-                });
-            });
-        }
-        getTweetID(url) {
-            if (/^\d{19}$/g.test(url))
-                return url;
-            const regex = /((twitter|x).com)\/\w*\/status\/(\d{19}$)/gm;
-            return regex.exec(url)?.[3];
-        }
-        getTag() {
-            return this.tag;
-        }
-        async setTag(value) {
-            this.tag = value;
-        }
         getConfigurators() {
             return [
                 {
@@ -267,20 +227,59 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components", 
             ];
             return actions;
         }
-        async init() {
-            await super.init();
-            this._moduleDir = this.currentModuleDir ?? path ?? '';
-            await this.initLibs();
-            const url = this.getAttribute('url', true);
-            const config = this.getAttribute('config', true);
-            if (url)
-                await this.setData({ url, config });
+        async setData(value) {
+            this._data = value;
+            this.updateWidget();
         }
-        async initLibs() {
+        getData() {
+            return this._data;
+        }
+        getTag() {
+            return this.module.tag;
+        }
+        setTag(value) {
+            const newValue = value || {};
+            for (let prop in newValue) {
+                if (newValue.hasOwnProperty(prop)) {
+                    if (prop === 'light' || prop === 'dark')
+                        this.updateTag(prop, newValue[prop]);
+                    else
+                        this.module.tag[prop] = newValue[prop];
+                }
+            }
+            this.updateTheme();
+        }
+        updateTag(type, value) {
+            this.module.tag[type] = this.module.tag[type] ?? {};
+            for (let prop in value) {
+                if (value.hasOwnProperty(prop))
+                    this.module.tag[type][prop] = value[prop];
+            }
+        }
+        updateStyle(name, value) {
+            if (value) {
+                this.module.style.setProperty(name, value);
+            }
+            else {
+                this.module.style.removeProperty(name);
+            }
+        }
+        updateTheme() {
+            const themeVar = document.body.style.getPropertyValue('--theme') || 'light';
+            this.updateStyle('--text-primary', this.module.tag[themeVar]?.fontColor);
+            this.updateStyle('--background-main', this.module.tag[themeVar]?.backgroundColor);
+        }
+        getTweetID(url) {
+            if (/^\d{19}$/g.test(url))
+                return url;
+            const regex = /((twitter|x).com)\/\w*\/status\/(\d{19}$)/gm;
+            return regex.exec(url)?.[3];
+        }
+        loadLib() {
             const lib = document.getElementById("twitter-wjs");
             if (lib)
                 return;
-            const widgetsPath = `${this._moduleDir}/lib/widgets.js`;
+            const widgetsPath = `${this.moduleDir}/lib/widgets.js`;
             window.twttr = (function (d, s, id, path) {
                 var js, fjs = d.getElementsByTagName(s)[0], t = window.twttr || {};
                 if (d.getElementById(id))
@@ -296,9 +295,100 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components", 
                 return t;
             }(document, "script", "twitter-wjs", widgetsPath));
         }
+    }
+    exports.Model = Model;
+});
+define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components", "@scom/scom-twitter-post/model.ts"], function (require, exports, components_2, model_1) {
+    "use strict";
+    var ScomTwitterPost_1;
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.ScomTwitterPost = void 0;
+    const Theme = components_2.Styles.Theme.ThemeVars;
+    let ScomTwitterPost = ScomTwitterPost_1 = class ScomTwitterPost extends components_2.Module {
+        constructor(parent, options) {
+            super(parent, options);
+        }
+        static async create(options, parent) {
+            let self = new this(parent, options);
+            await self.ready();
+            return self;
+        }
+        get url() {
+            return this.model.url;
+        }
+        set url(value) {
+            this.model.url = value;
+        }
+        get config() {
+            return this.model.config;
+        }
+        set config(value) {
+            this.model.config = value;
+        }
+        addBlock(blocknote, executeFn, callbackFn) {
+            this.initModel();
+            return this.model.addBlock(blocknote, executeFn, callbackFn);
+        }
+        async setData(data) {
+            await this.model.setData({ ...data });
+        }
+        getData() {
+            return this.model.getData();
+        }
+        getTag() {
+            return this.tag;
+        }
+        async setTag(value) {
+            this.model.setTag(value);
+        }
+        getConfigurators() {
+            this.initModel();
+            return this.model.getConfigurators();
+        }
+        clear() {
+            if (this.pnlTwitterPost) {
+                this.pnlTwitterPost.clearInnerHTML();
+            }
+        }
+        async renderWidget() {
+            if (!this.pnlTwitterPost)
+                return;
+            this.clear();
+            const self = this;
+            const id = this.model.getTweetID(this.url);
+            if (!id)
+                return;
+            const config = this.config || { theme: 'light' };
+            window.twttr.ready(function (twttr) {
+                self.pnlLoading.visible = true;
+                twttr.widgets.createTweet(id, self.pnlTwitterPost, config).then(function () {
+                    self.pnlLoading.visible = false;
+                });
+            });
+        }
+        createTwitterPost(wrapper, url) {
+            const twitterPostElm = new ScomTwitterPost_1(wrapper, { url });
+            return twitterPostElm;
+        }
+        initModel() {
+            if (!this.model) {
+                this.model = new model_1.Model(this);
+                this.model.createTwitterPost = this.createTwitterPost.bind(this);
+                this.model.updateWidget = this.renderWidget.bind(this);
+                this.model.loadLib();
+            }
+        }
+        async init() {
+            await super.init();
+            this.initModel();
+            const url = this.getAttribute('url', true);
+            const config = this.getAttribute('config', true);
+            if (url)
+                await this.setData({ url, config });
+        }
         render() {
             return (this.$render("i-panel", { border: { radius: 'inherit' } },
-                this.$render("i-vstack", { id: "pnlLoading", width: "100%", minHeight: 20, position: "absolute", bottom: 0, zIndex: 999, background: { color: 'transparent' }, class: "i-loading-overlay", visible: false, mediaQueries: [
+                this.$render("i-vstack", { id: "pnlLoading", width: "100%", minHeight: "5rem", position: "absolute", bottom: 0, zIndex: 999, background: { color: 'transparent' }, class: "i-loading-overlay", visible: false, mediaQueries: [
                         {
                             maxWidth: '767px',
                             properties: {
@@ -313,7 +403,7 @@ define("@scom/scom-twitter-post", ["require", "exports", "@ijstech/components", 
         }
     };
     ScomTwitterPost = ScomTwitterPost_1 = __decorate([
-        (0, components_1.customElements)('i-scom-twitter-post')
+        (0, components_2.customElements)('i-scom-twitter-post')
     ], ScomTwitterPost);
     exports.ScomTwitterPost = ScomTwitterPost;
 });
